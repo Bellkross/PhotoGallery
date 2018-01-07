@@ -2,15 +2,19 @@ package com.bignerdranch.android.photogallery;
 
 
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,6 +26,10 @@ public class PhotoGalleryFragment extends Fragment {
 
     private RecyclerView mPhotoRecyclerView;
     private List<GalleryItem> mItems = new ArrayList<>();
+    private GridLayoutManager mGridLayoutManager;
+    private int mLastPosition;
+    private int mFirstPosition;
+    private boolean mUserScrolled;
 
     public static PhotoGalleryFragment newInstance() {
         return new PhotoGalleryFragment();
@@ -39,8 +47,35 @@ public class PhotoGalleryFragment extends Fragment {
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_photo_gallery, container, false);
         mPhotoRecyclerView = v.findViewById(R.id.photo_recycler_view);
-        mPhotoRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 3));
-        setupAdapter();
+        mPhotoRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                float columnWidthInPixels = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 140, getActivity().getResources().getDisplayMetrics());
+                int width = mPhotoRecyclerView.getWidth();
+                int columnNumber = Math.round(width / columnWidthInPixels);
+                mGridLayoutManager = new GridLayoutManager(getActivity(), columnNumber);
+                mPhotoRecyclerView.setLayoutManager(mGridLayoutManager);
+                mPhotoRecyclerView.scrollToPosition(mFirstPosition);
+                mPhotoRecyclerView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+            }
+        });
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            mPhotoRecyclerView.setOnScrollChangeListener(new View.OnScrollChangeListener() {
+                @Override
+                public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
+                    mFirstPosition = mGridLayoutManager.findFirstVisibleItemPosition();
+                    mLastPosition = mGridLayoutManager.findLastVisibleItemPosition();
+                    if(!mUserScrolled) {
+                        if (mLastPosition == mItems.size() - 1) {
+                            mUserScrolled = true;
+                            Toast.makeText(getActivity(), "Bottom", Toast.LENGTH_SHORT).show();
+                            new FetchItemsTask().execute();
+                        }
+                    }
+                }
+            });
+        }setupAdapter();
         return v;
     }
 
@@ -90,7 +125,10 @@ public class PhotoGalleryFragment extends Fragment {
 
         @Override
         protected void onPostExecute(List<GalleryItem> items) {
-            mItems = items;
+            for(GalleryItem item: items) {
+                mItems.add(item);
+            }
+            mUserScrolled = false;
             setupAdapter();
         }
     }

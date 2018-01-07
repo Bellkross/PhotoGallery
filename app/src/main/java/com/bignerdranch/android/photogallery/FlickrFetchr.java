@@ -81,20 +81,22 @@ public class FlickrFetchr {
     private void parseItems(List<GalleryItem> items, JSONObject jsonBody)
             throws IOException, JSONException {
         Gson gson = new Gson();
-        Type galleyItemType = new TypeToken<ArrayList<GalleryItem>>(){}.getType();
+        Type galleyItemType = new TypeToken<ArrayList<GalleryItem>>() {
+        }.getType();
 
         JSONObject photosJsonObject = jsonBody.getJSONObject("photos");
         JSONArray photosJsonArray = photosJsonObject.getJSONArray("photo");
         String jsonPhotosString = photosJsonArray.toString();
 
-        List<GalleryItem> galleyItemList =  gson.fromJson(jsonPhotosString,galleyItemType);
+        List<GalleryItem> galleyItemList = gson.fromJson(jsonPhotosString, galleyItemType);
 
-        for (GalleryItem item : galleyItemList){
-            if(!(item.getUrl()==null||item.getUrl().isEmpty())){
+        for (GalleryItem item : galleyItemList) {
+            if (!(item.getUrl() == null || item.getUrl().isEmpty())) {
                 items.add(item);
+                Log.d("logs", item.getId());
             }
         }
-        
+
     }
 
 }
