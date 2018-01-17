@@ -1,6 +1,5 @@
 package com.bignerdranch.android.photogallery;
 
-
 import android.net.Uri;
 import android.util.Log;
 
@@ -81,8 +80,7 @@ public class FlickrFetchr {
     private void parseItems(List<GalleryItem> items, JSONObject jsonBody)
             throws IOException, JSONException {
         Gson gson = new Gson();
-        Type galleyItemType = new TypeToken<ArrayList<GalleryItem>>() {
-        }.getType();
+        Type galleyItemType = new TypeToken<ArrayList<GalleryItem>>() {}.getType();
 
         JSONObject photosJsonObject = jsonBody.getJSONObject("photos");
         JSONArray photosJsonArray = photosJsonObject.getJSONArray("photo");
