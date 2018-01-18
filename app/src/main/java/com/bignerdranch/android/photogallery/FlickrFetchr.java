@@ -91,7 +91,6 @@ public class FlickrFetchr {
         for (GalleryItem item : galleyItemList) {
             if (!(item.getUrl() == null || item.getUrl().isEmpty())) {
                 items.add(item);
-                Log.d("logs", item.getId());
             }
         }
 
