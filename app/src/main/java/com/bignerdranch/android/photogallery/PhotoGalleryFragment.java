@@ -33,6 +33,7 @@ public class PhotoGalleryFragment extends Fragment {
     private int mFirstPosition;
     private boolean mUserScrolled;
     private ThumbnailDownloader<PhotoHolder> mThumbnailDownloader;
+    private static boolean ok = true;
 
     public static PhotoGalleryFragment newInstance() {
         return new PhotoGalleryFragment();
@@ -99,6 +100,14 @@ public class PhotoGalleryFragment extends Fragment {
                         Toast.makeText(getActivity(), "Bottom" + mLastPosition, Toast.LENGTH_SHORT).show();
                         new FetchItemsTask().execute();
                     }
+                    int top = (mFirstPosition > 10) ? mFirstPosition - 10 : 0;
+                    int bottom = mLastPosition > mItems.size() - 11 ?
+                            mItems.size() : mLastPosition + 10;
+
+                    for (int i = top; i < bottom; i++) {
+                        mThumbnailDownloader.queueThumbnailCache(mItems.get(i).getUrl());
+                    }
+
                 }
 
             });
@@ -144,27 +153,10 @@ public class PhotoGalleryFragment extends Fragment {
         @Override
         public void onBindViewHolder(PhotoHolder photoHolder, int position) {
 
-            int top = (mFirstPosition > 10) ? mFirstPosition - 10 : 0;
-            int bottom = mLastPosition > mGalleryItems.size() - 11 ?
-                    mGalleryItems.size() : mLastPosition + 10;
-
             GalleryItem galleryItem;
             Drawable placeholder;
             placeholder = getResources().getDrawable(R.drawable.bill_up_close);
             photoHolder.bindDrawable(placeholder);
-
-            if (mLastPosition >= 14) {
-                for (int i = mFirstPosition; i <= top; i++) {
-                    galleryItem = mGalleryItems.get(i);
-                    mThumbnailDownloader.queueThumbnailCache(photoHolder, galleryItem.getUrl());
-                }
-            }
-
-            for (int i = mLastPosition; i < bottom; i++) {
-                galleryItem = mGalleryItems.get(i);
-                mThumbnailDownloader.queueThumbnailCache(photoHolder, galleryItem.getUrl());
-            }
-
 
             galleryItem = mGalleryItems.get(position);
             mThumbnailDownloader.queueThumbnail(photoHolder, galleryItem.getUrl());

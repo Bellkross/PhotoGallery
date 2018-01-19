@@ -24,6 +24,8 @@ public class ThumbnailDownloader<T> extends HandlerThread {
     private Handler mResponseHandler;
     private ThumbnailDownloadListener<T> mThumbnailDownloadListener;
 
+    private static int cached = 0;
+
     private LruCache<String, Bitmap> mMemoryCache;
 
     public ThumbnailDownloader(Handler responseHandler) {
@@ -64,11 +66,10 @@ public class ThumbnailDownloader<T> extends HandlerThread {
             public void handleMessage(Message msg) {
                 if (msg.what == MESSAGE_DOWNLOAD) {
                     T target = (T) msg.obj;
-                    Log.i(TAG, "Got a request for URL: " + mRequestMap.get(target));
+                    //Log.i(TAG, "Got a request for URL: " + mRequestMap.get(target));
                     handleRequest(target);
                 } else if (msg.what == MESSAGE_CACHE) {
                     T target = (T) msg.obj;
-                    Log.i(TAG, "Got a request for cache URL: " + mRequestMap.get(target));
                     handleCacheRequest(target);
                 }
             }
@@ -97,22 +98,19 @@ public class ThumbnailDownloader<T> extends HandlerThread {
         }
     }
 
-    public void queueThumbnailCache(T target, String url) {
+    public void queueThumbnailCache(String url) {
         Log.i(TAG, "Got a URL for cache: " + url);
 
-        if (url == null) {
-            mRequestMap.remove(target);
-        } else {
-            mRequestMap.put(target, url);
-            mRequestHandler.obtainMessage(MESSAGE_CACHE, target).sendToTarget();
-        }
+        mRequestHandler.obtainMessage(MESSAGE_CACHE, url).sendToTarget();
     }
 
     private void handleCacheRequest(final T target) {
-        final String url = mRequestMap.get(target);
+        final String url = (String)target;
         if (url == null) {
             return;
         }
+
+        Log.d(TAG, "handleCacheRequest: " + url);
 
         final Bitmap bitmapFromMemoryCache = getBitmapFromMemoryCache(url);
         try {
@@ -125,7 +123,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
                         .decodeByteArray(bitmapBytes, 0, bitmapBytes.length);
 
                 mResponseHandler.post(() -> {
-                    if (mRequestMap.get(target) != url || mHasQuit) {
+                    if (target != url || mHasQuit) {
                         return;
                     }
                     addBitmapToMemoryCache(url, bitmap);
@@ -158,14 +156,13 @@ public class ThumbnailDownloader<T> extends HandlerThread {
                 byte[] bitmapBytes = new FlickrFetchr().getUrlBytes(url);
                 final Bitmap bitmap = BitmapFactory
                         .decodeByteArray(bitmapBytes, 0, bitmapBytes.length);
-                Log.i(TAG, "Bitmap created");
 
                 mResponseHandler.post(() -> {
                     if (mRequestMap.get(target) != url || mHasQuit) {
                         return;
                     }
                     mRequestMap.remove(target);
-                    addBitmapToMemoryCache(url, bitmap);
+                    //addBitmapToMemoryCache(url, bitmap);
                     mThumbnailDownloadListener.onThumbnailDownloaded(target, bitmap);
                 });
             }
@@ -178,6 +175,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
     public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
         if (getBitmapFromMemoryCache(key) == null) {
             mMemoryCache.put(key, bitmap);
+            Log.d(TAG, cached++ + ")addBitmapToMemoryCache: cached");
         }
     }
 
