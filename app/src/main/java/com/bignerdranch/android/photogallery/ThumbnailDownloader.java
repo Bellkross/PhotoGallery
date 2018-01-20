@@ -24,8 +24,6 @@ public class ThumbnailDownloader<T> extends HandlerThread {
     private Handler mResponseHandler;
     private ThumbnailDownloadListener<T> mThumbnailDownloadListener;
 
-    private static int cached = 0;
-
     private LruCache<String, Bitmap> mMemoryCache;
 
     public ThumbnailDownloader(Handler responseHandler) {
@@ -110,8 +108,6 @@ public class ThumbnailDownloader<T> extends HandlerThread {
             return;
         }
 
-        Log.d(TAG, "handleCacheRequest: " + url);
-
         final Bitmap bitmapFromMemoryCache = getBitmapFromMemoryCache(url);
         try {
             if (bitmapFromMemoryCache != null) {
@@ -172,10 +168,13 @@ public class ThumbnailDownloader<T> extends HandlerThread {
         }
     }
 
+    public void clearMemoryCache(){
+        mMemoryCache.evictAll();
+    }
+
     public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
         if (getBitmapFromMemoryCache(key) == null) {
             mMemoryCache.put(key, bitmap);
-            Log.d(TAG, cached++ + ")addBitmapToMemoryCache: cached");
         }
     }
 
