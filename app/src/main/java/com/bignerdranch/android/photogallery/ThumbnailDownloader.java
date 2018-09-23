@@ -110,16 +110,14 @@ public class ThumbnailDownloader<T> extends HandlerThread {
 
         final Bitmap bitmapFromMemoryCache = getBitmapFromMemoryCache(url);
         try {
-            if (bitmapFromMemoryCache != null) {
-                return;
-            } else {
+            if (bitmapFromMemoryCache == null) {
                 byte[] bitmapBytes;
                 bitmapBytes = new FlickrFetchr().getUrlBytes(url);
                 final Bitmap bitmap = BitmapFactory
                         .decodeByteArray(bitmapBytes, 0, bitmapBytes.length);
 
                 mResponseHandler.post(() -> {
-                    if (target != url || mHasQuit) {
+                    if (mHasQuit) {
                         return;
                     }
                     addBitmapToMemoryCache(url, bitmap);
@@ -142,7 +140,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
             if (bitmapFromMemoryCache != null) {
                 Log.i(TAG, "Bitmap found in cache");
                 mResponseHandler.post(() -> {
-                    if (mRequestMap.get(target) != url || mHasQuit) {
+                    if (!mRequestMap.get(target).equals(url) || mHasQuit) {
                         return;
                     }
                     mRequestMap.remove(target);
@@ -154,7 +152,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
                         .decodeByteArray(bitmapBytes, 0, bitmapBytes.length);
 
                 mResponseHandler.post(() -> {
-                    if (mRequestMap.get(target) != url || mHasQuit) {
+                    if (!mRequestMap.get(target).equals(url) || mHasQuit) {
                         return;
                     }
                     mRequestMap.remove(target);
